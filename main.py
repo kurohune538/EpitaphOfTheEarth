@@ -7,7 +7,8 @@ import serial
 import re
 ser = serial.Serial('/dev/ttyACM0', 57600)
 distance = ''
-
+weights = [60, 40, 45, 30, 40, 70, 60, 20, 40, 100]
+mode = 1
 def create_osc_client(ip, port):
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", default=ip,
@@ -21,7 +22,7 @@ def create_osc_client(ip, port):
 
 
 if __name__ == "__main__":
-    osc_client = create_osc_client("10.23.10.127", 5005)
+    osc_client = create_osc_client("172.16.15.225", 5005)
     
     # for x in range(10):
     #     osc_client.send_message("/weight", random.random())
@@ -37,7 +38,7 @@ if __name__ == "__main__":
                 print(weight)
         distance_sensor_value = re.search('irSensorValue:.*?,',String_data)
         if(distance_sensor_value is not None):
-            print(distance_sensor_value)
+            # print(distance_sensor_value)
             distance_sensor_value = distance_sensor_value[0]
             if(distance_sensor_value is not NoneType):
                 distance = re.findall('[0-9]+', distance_sensor_value)[0]
@@ -47,7 +48,15 @@ if __name__ == "__main__":
         #     tmpIsPlayed = isPlayed_value[0]
         #     isPlayed_value = tmpIsPlayed[9:10]
         #     print(isPlayed_value)
-        osc_client.send_message("/weight", 200)
+        mode_value = re.search('mode:.*?n', String_data)
+        if(mode_value is not None):
+            mode_value = mode_value[0]
+            # print(mode_value)
+            if(mode_value is not NoneType):
+                mode = int(re.findall('[0-9]+', mode_value)[0])
+                print(mode)
+        osc_client.send_message("/weight", weights[mode-1])
         osc_client.send_message("/distance", int(distance))
+        osc_client.send_message("/mode", mode)
     
     ser.close()
